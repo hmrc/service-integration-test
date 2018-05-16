@@ -25,13 +25,17 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, Environment, Logger, Mode}
 import uk.gov.hmrc.integration.servicemanager.ServiceManagerClient
 
-trait ServiceSpec extends SuiteMixin with BeforeAndAfterAll with ScalaFutures with IntegrationPatience with GuiceOneServerPerSuite {
+trait ServiceSpec
+    extends SuiteMixin
+    with BeforeAndAfterAll
+    with ScalaFutures
+    with IntegrationPatience
+    with GuiceOneServerPerSuite {
 
   this: TestSuite =>
 
-  override def fakeApplication(): Application = {
+  override def fakeApplication(): Application =
     GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode)).configure(configMap).build()
-  }
 
   import uk.gov.hmrc.integration.UrlHelper._
 
@@ -47,24 +51,26 @@ trait ServiceSpec extends SuiteMixin with BeforeAndAfterAll with ScalaFutures wi
 
   protected lazy val externalServicePorts: Map[String, Int] = ServiceManagerClient.start(testId, externalServices)
 
-  private val mongoConfig = Map(s"$applicationMode.microservice.mongodb.uri" -> s"mongodb://localhost:27017/${testId.toString}")
+  private val mongoConfig = Map(
+    s"$applicationMode.microservice.mongodb.uri" -> s"mongodb://localhost:27017/${testId.toString}")
 
-  private lazy val configMap = externalServicePorts.foldLeft(Map.empty[String, Any])((map, servicePort) => servicePort match {
-    case (serviceName, p) =>
-      Logger.debug(s"External service '$serviceName' is running on port: $p")
+  private lazy val configMap = externalServicePorts.foldLeft(Map.empty[String, Any])((map, servicePort) =>
+    servicePort match {
+      case (serviceName, p) =>
+        Logger.debug(s"External service '$serviceName' is running on port: $p")
 
-      map ++ Map(
-        s"$applicationMode.microservice.services.$serviceName.port" -> p,
-        s"$applicationMode.microservice.services.$serviceName.host" -> "localhost"
-      )
+        map ++ Map(
+          s"$applicationMode.microservice.services.$serviceName.port" -> p,
+          s"$applicationMode.microservice.services.$serviceName.host" -> "localhost"
+        )
 
   }) ++ mongoConfig ++ additionalConfig
-
 
   def resource(path: String): String = s"http://localhost:$port/${-/(path)}"
 
   def externalResource(serviceName: String, path: String): String = {
-    val port = externalServicePorts.getOrElse(serviceName, throw new IllegalArgumentException(s"Unknown service '$serviceName'"))
+    val port =
+      externalServicePorts.getOrElse(serviceName, throw new IllegalArgumentException(s"Unknown service '$serviceName'"))
     s"http://localhost:$port/${-/(path)}"
   }
 
@@ -83,14 +89,16 @@ trait ServiceSpec extends SuiteMixin with BeforeAndAfterAll with ScalaFutures wi
   }
 }
 
-
 object UrlHelper {
   def -/(uri: String) = if (uri.startsWith("/")) uri.drop(1) else uri
 }
 
 case class TestId(testName: String) {
 
-  val runId = DateTimeFormat.forPattern("HHmmssSSS").withZone(DateTimeZone.forID("Europe/London")).print(DateTimeUtils.currentTimeMillis())
+  val runId = DateTimeFormat
+    .forPattern("HHmmssSSS")
+    .withZone(DateTimeZone.forID("Europe/London"))
+    .print(DateTimeUtils.currentTimeMillis())
 
   override val toString = s"${testName.toLowerCase.take(30)}-$runId"
 }
