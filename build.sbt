@@ -13,7 +13,7 @@ resolvers := Seq(
 )
 
 val compileDependencies = Seq(
-  "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % "provided"
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % "provided"
 )
 
 val testDependencies = Seq(

@@ -16,19 +16,21 @@
 
 package uk.gov.hmrc.integration.servicemanager
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import org.asynchttpclient.DefaultAsyncHttpClientConfig
-import play.api.data.validation.ValidationError
-import play.api.libs.json.{JsPath, Json}
+import play.api.libs.json.{JsPath, Json, JsonValidationError}
 import play.api.libs.ws.WSResponse
-import play.api.libs.ws.ahc.AhcWSClient
+import play.api.libs.ws.ahc.{AhcWSClient, AhcWSClientConfig, StandaloneAhcWSClient}
 import uk.gov.hmrc.integration.TestId
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.sys.addShutdownHook
+
+
 
 object ServiceManagerClient {
 
@@ -44,17 +46,15 @@ object ServiceManagerClient {
   implicit val stopRequestFormat                = Json.format[ServiceManagementStopRequest]
   implicit val responseFormat                   = Json.format[ServiceManagementResponse]
   implicit val versionEnvironmentVariableFormat = Json.format[VersionEnvironmentVariable]
-  lazy val client                               = new AhcWSClient(new DefaultAsyncHttpClientConfig.Builder().build)
+  lazy val client                               = new AhcWSClient(StandaloneAhcWSClient.apply(AhcWSClientConfig.apply()))
 
   def start(testId: TestId, externalServices: Seq[String], timeout: Duration = 60.seconds): Map[String, Int] =
     if (externalServices.isEmpty)
       Map.empty
     else {
-      val extendedTimeoutClient = new AhcWSClient({
-        val builder = new DefaultAsyncHttpClientConfig.Builder()
-        builder.setPooledConnectionIdleTimeout(timeout.toMillis.toInt)
-        builder.build()
-      })
+      val extendedTimeoutClient = new AhcWSClient(
+        StandaloneAhcWSClient.apply(AhcWSClientConfig.apply(idleConnectionInPoolTimeout = Duration.apply(timeout.toMillis, TimeUnit.MILLISECONDS)))
+      )
 
       val f = extendedTimeoutClient
         .url(serviceManagerStartUrl)
@@ -134,7 +134,7 @@ class JsException(
   url: String,
   body: String,
   clazz: Class[_],
-  errors: Seq[(JsPath, Seq[ValidationError])])
+  errors: Seq[(JsPath, Seq[JsonValidationError])])
     extends Exception {
   override def getMessage: String =
     s"$method of '$url' returned invalid json. Attempting to convert to ${clazz.getName} gave errors: $errors"
