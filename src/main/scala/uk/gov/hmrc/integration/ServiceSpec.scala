@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.integration
 
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeUtils, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, SuiteMixin, TestSuite}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, Environment, Logger, Mode}
-import uk.gov.hmrc.integration.servicemanager.ServiceManagerClient
+import uk.gov.hmrc.integration.servicemanager.ServiceManagerCommon
+
 
 trait ServiceSpec
     extends SuiteMixin
@@ -34,10 +35,10 @@ trait ServiceSpec
 
   this: TestSuite =>
 
+  import uk.gov.hmrc.integration.UrlHelper._
+
   override def fakeApplication(): Application =
     GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode)).configure(configMap).build()
-
-  import uk.gov.hmrc.integration.UrlHelper._
 
   def externalServices: Seq[String]
 
@@ -49,7 +50,7 @@ trait ServiceSpec
 
   protected val testId = TestId(testName)
 
-  protected lazy val externalServicePorts: Map[String, Int] = ServiceManagerClient.start(testId, externalServices)
+  protected lazy val externalServicePorts: Map[String, Int] = ServiceManagerCommon.start(testId, externalServices)
 
   private val mongoConfig = Map(
     s"$applicationMode.microservice.mongodb.uri" -> s"mongodb://localhost:27017/${testId.toString}")
@@ -82,7 +83,7 @@ trait ServiceSpec
   override def afterAll() {
     Logger.debug(s"Stopping all external services")
     try {
-      ServiceManagerClient.stop(testId, dropDatabases = true)
+      ServiceManagerCommon.stop(testId, dropDatabases = true)
     } catch {
       case t: Throwable => Logger.error(s"An exception occurred while stopping external services", t)
     }

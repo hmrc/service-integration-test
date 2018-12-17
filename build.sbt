@@ -1,21 +1,24 @@
 import uk.gov.hmrc.SbtAutoBuildPlugin
 
-enablePlugins(SbtAutoBuildPlugin, SbtGitVersioning, SbtArtifactory)
 
-name := "service-integration-test"
-majorVersion := 0
-makePublicallyAvailableOnBintray := true
-libraryDependencies ++= compileDependencies ++ testDependencies
+lazy val app = Project("service-integration-test", file("."))
+.enablePlugins(SbtAutoBuildPlugin, SbtGitVersioning, SbtArtifactory)
+.settings(
+  makePublicallyAvailableOnBintray := true,
+  majorVersion                     := 0,
+  libraryDependencies ++= compile ++ test,
+  resolvers := Seq( Resolver.bintrayRepo("hmrc", "releases"), Resolver.typesafeRepo("releases") )
+)
+.settings(PlayCrossCompilation.playCrossCompilationSettings)
 
-resolvers := Seq(
-  Resolver.bintrayRepo("hmrc", "releases"),
-  Resolver.typesafeRepo("releases")
+val compile: Seq[ModuleID] = PlayCrossCompilation.dependencies(
+  play25 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % "provided"),
+  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % "provided")
 )
 
-val compileDependencies = Seq(
-  "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % "provided"
+val test: Seq[ModuleID] = PlayCrossCompilation.dependencies(
+  shared = Seq("org.pegdown"            % "pegdown"             % "1.6.0" % Test),
+  play25 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test),
+  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test)
 )
 
-val testDependencies = Seq(
-  "org.pegdown" % "pegdown" % "1.6.0" % "test"
-)
