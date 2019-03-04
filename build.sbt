@@ -6,7 +6,8 @@ lazy val app = Project("service-integration-test", file("."))
     makePublicallyAvailableOnBintray := true,
     majorVersion := 0,
     libraryDependencies ++= compile ++ test,
-    resolvers := Seq(Resolver.bintrayRepo("hmrc", "releases"), Resolver.typesafeRepo("releases"))
+    resolvers := Seq(Resolver.bintrayRepo("hmrc", "releases"), Resolver.typesafeRepo("releases")),
+    crossScalaVersions := List("2.11.12", "2.12.8")
   )
   .settings(PlayCrossCompilation.playCrossCompilationSettings)
 
