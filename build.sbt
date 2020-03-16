@@ -27,11 +27,13 @@ val compile: Seq[ModuleID] = PlayCrossCompilation.dependencies(
     // https://github.com/playframework/playframework/blob/master/documentation/manual/releases/release26/migration26/Migration26.md#xercesimpl-removal
     "xerces" % "xercesImpl" % "2.12.0"
   ),
-  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % "provided")
+  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % "provided"),
+  play27 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % "provided")
 )
 
 val test: Seq[ModuleID] = PlayCrossCompilation.dependencies(
   shared = Seq("org.pegdown"            % "pegdown"             % "1.6.0" % Test),
   play25 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test),
-  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test)
+  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test),
+  play27 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test)
 )
