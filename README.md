@@ -13,7 +13,6 @@ Include the following dependency in your SBT build
 ```scala
 resolvers += Resolver.bintrayRepo("hmrc", "releases")
 
-libraryDependencies += ""org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % "test, it","
 libraryDependencies += "uk.gov.hmrc" %% "service-integration-test" % "x.x.x" % "test,it"
 ```
 
@@ -45,8 +44,15 @@ class ExampleIntegrationTest extends WordSpec with Matchers with ServiceSpec  {
 }
 ```
 
+## How to run
+
+Run service-manager
+```bash
+smserver
+```
+
+Then run tests.
 
 ## License ##
- 
-This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
 
+This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").

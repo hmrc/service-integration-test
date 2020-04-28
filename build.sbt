@@ -21,19 +21,16 @@ val compile: Seq[ModuleID] = PlayCrossCompilation.dependencies(
     "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.9.7"
   ),
   play25 = Seq(
-    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % "provided",
+    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0",
     // force dependencies due to security flaws found in xercesImpl 2.11.0
     // only applies to play 2.5 since it was removed from play 2.6
     // https://github.com/playframework/playframework/blob/master/documentation/manual/releases/release26/migration26/Migration26.md#xercesimpl-removal
     "xerces" % "xercesImpl" % "2.12.0"
   ),
-  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % "provided"),
-  play27 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % "provided")
+  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0"),
+  play27 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3")
 )
 
 val test: Seq[ModuleID] = PlayCrossCompilation.dependencies(
-  shared = Seq("org.pegdown"            % "pegdown"             % "1.6.0" % Test),
-  play25 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test),
-  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test),
-  play27 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test)
+  shared = Seq("org.pegdown"            % "pegdown"             % "1.6.0" % Test)
 )
