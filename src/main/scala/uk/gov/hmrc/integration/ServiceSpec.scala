@@ -21,7 +21,7 @@ import org.joda.time.{DateTimeUtils, DateTimeZone}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, SuiteMixin, TestSuite}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 import play.api.{Application, Environment, Logger, Mode}
 import uk.gov.hmrc.integration.servicemanager.ServiceManagerClient
 
@@ -35,7 +35,10 @@ trait ServiceSpec
   this: TestSuite =>
 
   override def fakeApplication(): Application =
-    GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode)).configure(configMap).build()
+    GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode.getOrElse(Mode.Dev)))
+      .configure(configMap)
+      .overrides(addtionalOverrides :_*)
+      .build()
 
   import uk.gov.hmrc.integration.UrlHelper._
 
@@ -43,16 +46,20 @@ trait ServiceSpec
 
   def additionalConfig: Map[String, _ <: Any] = Map.empty
 
+  def addtionalOverrides: Seq[GuiceableModule] = Seq.empty
+
   def testName: String = getClass.getSimpleName
 
-  def applicationMode: Mode.Value = Mode.Dev
+  def applicationMode: Option[Mode.Value] = Some(Mode.Dev)
+
+  def runModePrefix: String = applicationMode.map(m => s"${m.toString}.").getOrElse("")
 
   protected val testId = TestId(testName)
 
   protected lazy val externalServicePorts: Map[String, Int] = ServiceManagerClient.start(testId, externalServices)
 
   private val mongoConfig = Map(
-    s"$applicationMode.microservice.mongodb.uri" -> s"mongodb://localhost:27017/${testId.toString}")
+    s"${runModePrefix}microservice.mongodb.uri" -> s"mongodb://localhost:27017/${testId.toString}")
 
   private lazy val configMap = externalServicePorts.foldLeft(Map.empty[String, Any])((map, servicePort) =>
     servicePort match {
@@ -60,8 +67,8 @@ trait ServiceSpec
         Logger.debug(s"External service '$serviceName' is running on port: $p")
 
         map ++ Map(
-          s"$applicationMode.microservice.services.$serviceName.port" -> p,
-          s"$applicationMode.microservice.services.$serviceName.host" -> "localhost"
+          s"${runModePrefix}microservice.services.$serviceName.port" -> p,
+          s"${runModePrefix}microservice.services.$serviceName.host" -> "localhost"
         )
 
   }) ++ mongoConfig ++ additionalConfig
