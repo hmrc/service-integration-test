@@ -35,9 +35,10 @@ trait ServiceSpec
   this: TestSuite =>
 
   override def fakeApplication(): Application =
-    GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode.getOrElse(Mode.Dev)))
+    // If applicationMode is not set, use Mode.Test (the default for GuiceApplicationBuilder)
+    GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode.getOrElse(Mode.Test)))
       .configure(configMap)
-      .overrides(addtionalOverrides :_*)
+      .overrides(additonalOverrides :_*)
       .build()
 
   import uk.gov.hmrc.integration.UrlHelper._
@@ -46,13 +47,14 @@ trait ServiceSpec
 
   def additionalConfig: Map[String, _ <: Any] = Map.empty
 
-  def addtionalOverrides: Seq[GuiceableModule] = Seq.empty
+  def additonalOverrides: Seq[GuiceableModule] = Seq.empty
 
   def testName: String = getClass.getSimpleName
 
+  // If applicationMode is set, default to Mode.Dev, to preserve earlier behaviour
   def applicationMode: Option[Mode.Value] = Some(Mode.Dev)
 
-  def runModePrefix: String = applicationMode.map(m => s"${m.toString}.").getOrElse("")
+  private def runModePrefix: String = applicationMode.map(m => s"${m.toString}.").getOrElse("")
 
   protected val testId = TestId(testName)
 
