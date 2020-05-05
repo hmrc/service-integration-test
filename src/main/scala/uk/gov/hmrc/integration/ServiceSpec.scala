@@ -38,7 +38,7 @@ trait ServiceSpec
     // If applicationMode is not set, use Mode.Test (the default for GuiceApplicationBuilder)
     GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode.getOrElse(Mode.Test)))
       .configure(configMap)
-      .overrides(additonalOverrides :_*)
+      .overrides(additionalOverrides :_*)
       .build()
 
   import uk.gov.hmrc.integration.UrlHelper._
@@ -47,7 +47,7 @@ trait ServiceSpec
 
   def additionalConfig: Map[String, _ <: Any] = Map.empty
 
-  def additonalOverrides: Seq[GuiceableModule] = Seq.empty
+  def additionalOverrides: Seq[GuiceableModule] = Seq.empty
 
   def testName: String = getClass.getSimpleName
 
