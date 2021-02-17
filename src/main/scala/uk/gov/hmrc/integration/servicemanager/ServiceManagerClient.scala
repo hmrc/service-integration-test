@@ -19,7 +19,7 @@ package uk.gov.hmrc.integration.servicemanager
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.libs.json.{JsPath, Json}
+import play.api.libs.json.{JsPath, JsonValidationError, Json}
 import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
 import uk.gov.hmrc.integration.TestId
@@ -128,7 +128,7 @@ class JsException(
   url: String,
   body: String,
   clazz: Class[_],
-  errors: Seq[(JsPath, Seq[ValidationError])])
+  errors: Seq[(JsPath, Seq[JsonValidationError])])
     extends Exception {
   override def getMessage: String =
     s"$method of '$url' returned invalid json. Attempting to convert to ${clazz.getName} gave errors: $errors"

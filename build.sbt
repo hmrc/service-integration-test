@@ -11,15 +11,14 @@ lazy val app = Project("service-integration-test", file("."))
   .settings(PlayCrossCompilation.playCrossCompilationSettings)
 
 val compile: Seq[ModuleID] = PlayCrossCompilation.dependencies(
-  shared = Seq(
-    // force dependencies due to security flaws found in jackson-databind < 2.9.x using XRay
-    "com.fasterxml.jackson.core"     % "jackson-core"            % "2.9.7",
-    "com.fasterxml.jackson.core"     % "jackson-databind"        % "2.9.7",
-    "com.fasterxml.jackson.core"     % "jackson-annotations"     % "2.9.7",
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8"   % "2.9.7",
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.9.7"
-  ),
-  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0"),
+  play26 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0",
+               // force dependencies due to security flaws found in jackson-databind < 2.9.x using XRay
+               "com.fasterxml.jackson.core"     % "jackson-core"            % "2.9.7",
+               "com.fasterxml.jackson.core"     % "jackson-databind"        % "2.9.7",
+               "com.fasterxml.jackson.core"     % "jackson-annotations"     % "2.9.7",
+               "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8"   % "2.9.7",
+               "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.9.7"
+           ),
   play27 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3"),
   play28 = Seq("org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0")
 )
