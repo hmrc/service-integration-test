@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ object ServiceManagerClient {
 
   def version_variable(service: String): VersionEnvironmentVariable = {
     val versionEnvironmentVariable: Future[VersionEnvironmentVariable] =
-      client.url(serviceManagerVersionVariableUrl).withQueryString("service" -> service).get().map {
+      client.url(serviceManagerVersionVariableUrl).withQueryStringParameters("service" -> service).get().map {
         response: WSResponse =>
           response.json
             .validate[VersionEnvironmentVariable]

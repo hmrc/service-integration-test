@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,14 @@ import play.api.{Application, Environment, Logger, Mode}
 import uk.gov.hmrc.integration.servicemanager.ServiceManagerClient
 
 trait ServiceSpec
-    extends SuiteMixin
-    with BeforeAndAfterAll
-    with ScalaFutures
-    with IntegrationPatience
-    with GuiceOneServerPerSuite {
-
+  extends SuiteMixin
+     with BeforeAndAfterAll
+     with ScalaFutures
+     with IntegrationPatience
+     with GuiceOneServerPerSuite {
   this: TestSuite =>
+
+  private val logger = Logger(getClass)
 
   override def fakeApplication(): Application =
     // If applicationMode is not set, use Mode.Test (the default for GuiceApplicationBuilder)
@@ -52,7 +53,7 @@ trait ServiceSpec
   def testName: String = getClass.getSimpleName
 
   // If applicationMode is set, default to Mode.Dev, to preserve earlier behaviour
-  def applicationMode: Option[Mode.Value] = Some(Mode.Dev)
+  def applicationMode: Option[Mode] = Some(Mode.Dev)
 
   private def runModePrefix: String = applicationMode.map(m => s"${m.toString}.").getOrElse("")
 
@@ -66,7 +67,7 @@ trait ServiceSpec
   private lazy val configMap = externalServicePorts.foldLeft(Map.empty[String, Any])((map, servicePort) =>
     servicePort match {
       case (serviceName, p) =>
-        Logger.debug(s"External service '$serviceName' is running on port: $p")
+        logger.debug(s"External service '$serviceName' is running on port: $p")
 
         map ++ Map(
           s"${runModePrefix}microservice.services.$serviceName.port" -> p,
@@ -84,17 +85,19 @@ trait ServiceSpec
   }
 
   override def beforeAll() {
-    Logger.debug(s"Starting all external services")
+    super.beforeAll()
+    logger.debug(s"Starting all external services")
     externalServicePorts
   }
 
   override def afterAll() {
-    Logger.debug(s"Stopping all external services")
+    logger.debug(s"Stopping all external services")
     try {
       ServiceManagerClient.stop(testId, dropDatabases = true)
     } catch {
-      case t: Throwable => Logger.error(s"An exception occurred while stopping external services", t)
+      case t: Throwable => logger.error(s"An exception occurred while stopping external services", t)
     }
+    super.afterAll()
   }
 }
 
