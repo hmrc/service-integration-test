@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package uk.gov.hmrc.integration.servicemanager
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.libs.json.{JsPath, Json}
+import play.api.libs.json.{JsPath, JsonValidationError, Json}
 import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
 import uk.gov.hmrc.integration.TestId
@@ -89,7 +89,7 @@ object ServiceManagerClient {
 
   def version_variable(service: String): VersionEnvironmentVariable = {
     val versionEnvironmentVariable: Future[VersionEnvironmentVariable] =
-      client.url(serviceManagerVersionVariableUrl).withQueryString("service" -> service).get().map {
+      client.url(serviceManagerVersionVariableUrl).withQueryStringParameters("service" -> service).get().map {
         response: WSResponse =>
           response.json
             .validate[VersionEnvironmentVariable]
@@ -128,7 +128,7 @@ class JsException(
   url: String,
   body: String,
   clazz: Class[_],
-  errors: Seq[(JsPath, Seq[ValidationError])])
+  errors: Seq[(JsPath, Seq[JsonValidationError])])
     extends Exception {
   override def getMessage: String =
     s"$method of '$url' returned invalid json. Attempting to convert to ${clazz.getName} gave errors: $errors"
