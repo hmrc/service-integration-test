@@ -35,48 +35,66 @@ trait ServiceSpec
 
   private val logger = Logger(getClass)
 
-  override def fakeApplication(): Application =
+  override def fakeApplication(): Application = {
+    logger.info(s"""Starting application with additional config:
+      |  ${configMap.mkString("\n  ")}
+      |and module overrides:
+      |  ${additionalOverrides.mkString("[", "\n", "]")}""".stripMargin)
     // If applicationMode is not set, use Mode.Test (the default for GuiceApplicationBuilder)
     GuiceApplicationBuilder(environment = Environment.simple(mode = applicationMode.getOrElse(Mode.Test)))
       .configure(configMap)
       .overrides(additionalOverrides :_*)
       .build()
+  }
 
   import uk.gov.hmrc.integration.UrlHelper._
 
   def externalServices: Seq[String]
 
-  def additionalConfig: Map[String, _ <: Any] = Map.empty
+  def additionalConfig: Map[String, _ <: Any] =
+    Map.empty
 
-  def additionalOverrides: Seq[GuiceableModule] = Seq.empty
+  def additionalOverrides: Seq[GuiceableModule] =
+    Seq.empty
 
-  def testName: String = getClass.getSimpleName
+  def testName: String =
+    getClass.getSimpleName
 
   // If applicationMode is set, default to Mode.Dev, to preserve earlier behaviour
-  def applicationMode: Option[Mode] = Some(Mode.Dev)
+  def applicationMode: Option[Mode] =
+    Some(Mode.Dev)
 
-  private def runModePrefix: String = applicationMode.map(m => s"${m.toString}.").getOrElse("")
+  protected val testId =
+    TestId(testName)
 
-  protected val testId = TestId(testName)
+  protected lazy val externalServicePorts: Map[String, Int] =
+    ServiceManagerClient.start(testId, externalServices)
 
-  protected lazy val externalServicePorts: Map[String, Int] = ServiceManagerClient.start(testId, externalServices)
+  /** Can be overridden or read to synchronise with mongo testing traits if
+    * you require interrogating/mutating mongo data as part of your test.
+    */
+  // This is not called mongoUri to avoid conflicts with mongo testing traits.
+  protected def serviceMongoUri =
+    s"mongodb://localhost:27017/${testId.toString}"
 
-  private val mongoConfig = Map(
-    s"${runModePrefix}microservice.mongodb.uri" -> s"mongodb://localhost:27017/${testId.toString}")
+  private lazy val mongoConfig =
+    Map(s"mongodb.uri" -> serviceMongoUri)
 
-  private lazy val configMap = externalServicePorts.foldLeft(Map.empty[String, Any])((map, servicePort) =>
-    servicePort match {
-      case (serviceName, p) =>
-        logger.debug(s"External service '$serviceName' is running on port: $p")
+  private lazy val configMap =
+    externalServicePorts.foldLeft(Map.empty[String, Any])((map, servicePort) =>
+      map ++ (servicePort match {
+               case (serviceName, p) =>
+                 Map(
+                   s"microservice.services.$serviceName.port" -> p,
+                   s"microservice.services.$serviceName.host" -> "localhost"
+                 )
+             })
+    ) ++
+    mongoConfig ++
+    additionalConfig
 
-        map ++ Map(
-          s"${runModePrefix}microservice.services.$serviceName.port" -> p,
-          s"${runModePrefix}microservice.services.$serviceName.host" -> "localhost"
-        )
-
-  }) ++ mongoConfig ++ additionalConfig
-
-  def resource(path: String): String = s"http://localhost:$port/${-/(path)}"
+  def resource(path: String): String =
+    s"http://localhost:$port/${-/(path)}"
 
   def externalResource(serviceName: String, path: String): String = {
     val port =
@@ -102,15 +120,18 @@ trait ServiceSpec
 }
 
 object UrlHelper {
-  def -/(uri: String) = if (uri.startsWith("/")) uri.drop(1) else uri
+  def -/(uri: String) =
+    if (uri.startsWith("/")) uri.drop(1) else uri
 }
 
 case class TestId(testName: String) {
 
-  val runId = DateTimeFormat
-    .forPattern("HHmmssSSS")
-    .withZone(DateTimeZone.forID("Europe/London"))
-    .print(DateTimeUtils.currentTimeMillis())
+  val runId =
+    DateTimeFormat
+      .forPattern("HHmmssSSS")
+      .withZone(DateTimeZone.forID("Europe/London"))
+      .print(DateTimeUtils.currentTimeMillis())
 
-  override val toString = s"${testName.toLowerCase.take(30)}-$runId"
+  override val toString =
+    s"${testName.toLowerCase.take(30)}-$runId"
 }
