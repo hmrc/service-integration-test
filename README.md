@@ -53,6 +53,25 @@ smserver
 
 Then run tests.
 
+
+## Migration
+
+### 1.0.0
+
+Run mode prefix is dropped from `microservice.services.` configuration - it is expected that your services do not require the run mode prefix anymore.
+
+Mongodb uri is now configured with `mongodb.uri` (previously `${runModePrefix}microservice.mongodb.uri`).
+
+The mongodb uri is configured with `serviceMongoUri`. The default is generated to avoid conflicts, and should suffice; but if you are combining the `ServiceSpec` with a mongo test trait, then you will need to synchronise the two. E.g.
+```scala
+class ExampleIntegrationTest extends WordSpec with Matchers with ServiceSpec with MongoSupport {
+  override def mongoUri = super.serviceMongoUri
+  // alternatively
+  //override def serviceMongoUri = super.mongoUri
+}
+```
+
+
 ## License ##
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
