@@ -1,12 +1,11 @@
 import uk.gov.hmrc.SbtAutoBuildPlugin
 
 lazy val app = Project("service-integration-test", file("."))
-  .enablePlugins(SbtAutoBuildPlugin, SbtGitVersioning, SbtArtifactory)
   .settings(
-    makePublicallyAvailableOnBintray := true,
+    isPublicArtefact := true,
     majorVersion := 1,
     libraryDependencies ++= compile ++ test,
-    scalaVersion := "2.12.8"
+    scalaVersion := "2.12.14"
   )
   .settings(PlayCrossCompilation.playCrossCompilationSettings)
 
