@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.integration
 
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{DateTimeUtils, DateTimeZone}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, SuiteMixin, TestSuite}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 import play.api.{Application, Environment, Logger, Mode}
 import uk.gov.hmrc.integration.servicemanager.ServiceManagerClient
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 trait ServiceSpec
   extends SuiteMixin
@@ -127,10 +127,7 @@ object UrlHelper {
 case class TestId(testName: String) {
 
   val runId =
-    DateTimeFormat
-      .forPattern("HHmmssSSS")
-      .withZone(DateTimeZone.forID("Europe/London"))
-      .print(DateTimeUtils.currentTimeMillis())
+    DateTimeFormatter.ofPattern("HHmmssSSS").format(LocalDateTime.now())
 
   override val toString =
     s"${testName.toLowerCase.take(30)}-$runId"
