@@ -54,7 +54,12 @@ smserver
 Then run tests.
 
 
-## Migration
+## CHANGES
+
+### 1.3.0
+
+- Drops Play 2.6 and 2.7 support - only supports Play 2.8
+- Cross builds for Scala 2.12 and 2.13
 
 ### 1.0.0
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,19 @@
 
 package uk.gov.hmrc.integration.servicemanager
 
-
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import play.api.libs.json.{JsPath, JsonValidationError, Json}
-import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
 import uk.gov.hmrc.integration.TestId
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.sys.addShutdownHook
 
 object ServiceManagerClient {
 
   implicit val system = ActorSystem("serviceManagerClient")
-  addShutdownHook(system.terminate)
-  implicit val mat = ActorMaterializer()
+  addShutdownHook(system.terminate())
 
   protected val serviceManagerStartUrl          = "http://localhost:8085/start"
   protected val serviceManagerStopUrl           = "http://localhost:8085/stop"
@@ -44,92 +40,114 @@ object ServiceManagerClient {
   implicit val versionEnvironmentVariableFormat = Json.format[VersionEnvironmentVariable]
   lazy val client                               = AhcWsClientFactory.createClient()
 
-  def start(testId: TestId, externalServices: Seq[String], timeout: Duration = 60.seconds): Map[String, Int] =
+  def start(
+    testId          : TestId,
+    externalServices: Seq[String],
+    timeout         : Duration    = 60.seconds
+  ): Map[String, Int] =
     if (externalServices.isEmpty)
       Map.empty
     else {
       val extendedTimeoutClient: AhcWSClient = AhcWsClientFactory.createClient(timeout)
-
-      val f = extendedTimeoutClient
-        .url(serviceManagerStartUrl)
-        .withRequestTimeout(timeout)
-        .post(
-          Json.toJson(ServiceManagementStartRequest(testId.toString, externalServices.map(s => ExternalService(s)))))
-        .map { response: WSResponse =>
-          if (response.status >= 200 && response.status <= 299) {
-            val servicePorts: Seq[ServiceManagementResponse] = response.json
-              .validate[Seq[ServiceManagementResponse]]
-              .fold(
-                errs =>
-                  throw new JsException(
-                    "POST",
-                    serviceManagerStartUrl,
-                    response.body,
-                    classOf[Seq[ServiceManagementResponse]],
-                    errs),
-                valid => valid)
-
-            servicePorts.map(s => s.serviceName -> s.port).toMap
-          } else {
-            throw new RuntimeException(
-              s"Received unexpected response from ServiceManager: ${response.status}\n\n" + response.body)
-          }
-        }
+      val f =
+        extendedTimeoutClient
+          .url(serviceManagerStartUrl)
+          .withRequestTimeout(timeout)
+          .post(
+            Json.toJson(ServiceManagementStartRequest(testId.toString, externalServices.map(s => ExternalService(s))))
+          )
+          .map(response =>
+            if (response.status >= 200 && response.status <= 299) {
+              response.json
+                .validate[Seq[ServiceManagementResponse]]
+                .fold(
+                  errors => throw new JsException(
+                              "POST",
+                              serviceManagerStartUrl,
+                              response.body,
+                              classOf[Seq[ServiceManagementResponse]],
+                              errors
+                            ),
+                  valid  => valid
+                )
+                .map(s => s.serviceName -> s.port)
+                .toMap
+            } else
+              throw new RuntimeException(
+                s"Received unexpected response from ServiceManager: ${response.status}\n\n${response.body}"
+              )
+          )
 
       Await.result(f.andThen { case _ => extendedTimeoutClient.close() }, 5.minutes)
     }
 
-  def stop(testId: TestId, dropDatabases: Boolean) {
+  def stop(testId: TestId, dropDatabases: Boolean): Unit = {
     Await.result(
       client
         .url(serviceManagerStopUrl)
         .post(Json.toJson(ServiceManagementStopRequest(testId.toString, dropDatabases))),
-      30.seconds)
+      30.seconds
+    )
   }
 
-  def version_variable(service: String): VersionEnvironmentVariable = {
-    val versionEnvironmentVariable: Future[VersionEnvironmentVariable] =
-      client.url(serviceManagerVersionVariableUrl).withQueryStringParameters("service" -> service).get().map {
-        response: WSResponse =>
+  def versionVariable(service: String): VersionEnvironmentVariable = {
+    val f =
+      client
+        .url(serviceManagerVersionVariableUrl)
+        .withQueryStringParameters("service" -> service)
+        .get()
+        .map(response =>
           response.json
             .validate[VersionEnvironmentVariable]
             .fold(
-              errors =>
-                throw new JsException(
-                  "GET",
-                  s"$serviceManagerVersionVariableUrl?service=$service",
-                  response.body,
-                  classOf[VersionEnvironmentVariable],
-                  errors),
-              valid => valid
+              errors => throw new JsException(
+                          "GET",
+                          s"$serviceManagerVersionVariableUrl?service=$service",
+                          response.body,
+                          classOf[VersionEnvironmentVariable],
+                          errors
+                        ),
+              valid  => valid
             )
-      }
+      )
 
-    Await.result(versionEnvironmentVariable, 5.minutes)
+    Await.result(f, 5.minutes)
   }
 }
 
 case class ExternalService(
   serviceName: String,
-  runFrom: String            = "RELEASE_JAR",
-  classifier: Option[String] = None,
-  version: Option[String]    = None)
+  runFrom    : String         = "RELEASE_JAR",
+  classifier : Option[String] = None,
+  version    : Option[String] = None
+)
 
-case class VersionEnvironmentVariable(variable: String)
+case class VersionEnvironmentVariable(
+  variable: String
+)
 
-case class ServiceManagementStartRequest(testId: String, services: Seq[ExternalService])
+case class ServiceManagementStartRequest(
+  testId  : String,
+  services: Seq[ExternalService]
+)
 
-case class ServiceManagementStopRequest(testId: String, dropDatabases: Boolean)
+case class ServiceManagementStopRequest(
+  testId       : String,
+  dropDatabases: Boolean
+)
 
-case class ServiceManagementResponse(port: Int, serviceName: String)
+case class ServiceManagementResponse(
+  port       : Int,
+  serviceName: String
+)
 
 class JsException(
   method: String,
-  url: String,
-  body: String,
-  clazz: Class[_],
-  errors: Seq[(JsPath, Seq[JsonValidationError])])
-    extends Exception {
+  url   : String,
+  body  : String,
+  clazz : Class[_],
+  errors: scala.collection.Seq[(JsPath, scala.collection.Seq[JsonValidationError])] // default Seq for Scala 2.13 is scala.collection.immutable.Seq - this keeps it the same as JsResult
+) extends Exception {
   override def getMessage: String =
     s"$method of '$url' returned invalid json. Attempting to convert to ${clazz.getName} gave errors: $errors"
 }
