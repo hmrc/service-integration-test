@@ -37,3 +37,7 @@ rebel.xml
 .history
 .metals/
 .vscode/
+.bloop/
+project/.bloop/
+project/metals.sbt
+project/project

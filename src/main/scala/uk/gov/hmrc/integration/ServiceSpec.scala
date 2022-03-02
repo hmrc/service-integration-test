@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,13 +102,13 @@ trait ServiceSpec
     s"http://localhost:$port/${-/(path)}"
   }
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     super.beforeAll()
     logger.debug(s"Starting all external services")
     externalServicePorts
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     logger.debug(s"Stopping all external services")
     try {
       ServiceManagerClient.stop(testId, dropDatabases = true)
