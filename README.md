@@ -1,6 +1,12 @@
-service-integration-test
-========
-[ ![Download](https://api.bintray.com/packages/hmrc/releases/service-integration-test/images/download.svg) ](https://bintray.com/hmrc/releases/service-integration-test/_latestVersion)
+# service-integration-test
+
+## This library is deprecated.
+
+### It relied on the deprecated [service-manager](https://github.com/hmrc/service-manager).
+
+### Instead, [service-manager-2](https://github.com/hmrc/sm2) should be started with an appropriate PROFILE before running the integration tests.
+
+------
 
 service-integration-test is a Scala library providing some useful functionality for integration tests.
 
